@@ -1,0 +1,364 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Beamer Presentation
+% LaTeX Template
+% Version 1.0 (10/11/12)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND THEMES
+%----------------------------------------------------------------------------------------
+
+\documentclass{beamer}
+
+\mode<presentation> {
+
+% The Beamer class comes with a number of default slide themes
+% which change the colors and layouts of slides. Below this is a list
+% of all the themes, uncomment each in turn to see what they look like.
+
+%\usetheme{default}
+%\usetheme{AnnArbor}
+%\usetheme{Antibes}t
+%\usetheme{Bergen}
+%\usetheme{Berkeley} %I LIKE
+%\usetheme{Berlin}
+%\usetheme{Boadilla}
+%\usetheme{CambridgeUS}
+%\usetheme{Copenhagen}
+%\usetheme{Darmstadt}
+%\usetheme{Dresden}
+%\usetheme{Frankfurt}
+%\usetheme{Goettingen}
+%\usetheme{Hannover}
+%\usetheme{Ilmenau}
+%\usetheme{JuanLesPins}
+%\usetheme{Luebeck}
+\usetheme{Madrid} %default, not bad
+%\usetheme{Malmoe}
+%\usetheme{Marburg}
+%\usetheme{Montpellier}
+%\usetheme{PaloAlto} %I LIKE 2
+%\usetheme{Pittsburgh}
+%\usetheme{Rochester} %not bad
+%\usetheme{Singapore}
+%\usetheme{Szeged}
+%\usetheme{Warsaw}
+
+% As well as themes, the Beamer class has a number of color themes
+% for any slide theme. Uncomment each of these in turn to see how it
+% changes the colors of your current slide theme.
+
+%\usecolortheme{albatross}
+%\usecolortheme{beaver}
+%\usecolortheme{beetle}
+%\usecolortheme{crane}
+%\usecolortheme{dolphin}
+%\usecolortheme{dove}
+%\usecolortheme{fly}
+%\usecolortheme{lily}
+%\usecolortheme{orchid} %same as default
+%\usecolortheme{rose} %same as default
+%\usecolortheme{seagull}
+%\usecolortheme{seahorse}
+%\usecolortheme{whale} %same as default
+%\usecolortheme{wolverine}
+
+%\setbeamertemplate{footline} % To remove the footer line in all slides uncomment this line
+%\setbeamertemplate{footline}[page number] % To replace the footer line in all slides with a simple slide count uncomment this line
+
+%\setbeamertemplate{navigation symbols}{} % To remove the navigation symbols from the bottom of all slides uncomment this line
+}
+\usepackage[normalem]{ulem}
+\usepackage{pgfplots}
+\usepackage{graphicx} % Allows including images
+\usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables
+
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+
+\title[Compositionality Prediction]{Predicting the Compositionality of Multiword Expressions} % The short title appears at the bottom of every slide, the full title is only on the title page
+
+\author{Navnita Nandakumar (921834)} % Your name
+\bigskip
+\institute[] % Your institution as it will appear on the bottom of every slide, may be shorthand to save space
+{
+Department of Computing and Information Systems \\
+The University of Melbourne \\
+\medskip
+Credit Points: 75\\
+COMP90070 - Research Project \\
+\bigskip
+\small{
+\textit{Supervised by} \\
+Prof. Timothy Baldwin \\ Dr. Bahar Salehi
+}}
+\date{May 27, 2019} % Date, can be changed to a custom date
+\pgfplotstableread{
+x   farahm  reddy   ramisch discoj
+doc2vec .088  .025 .039    .003 
+Infersent   .019    .527    .221    .202
+fastText    .295    .285    .446    .353
+ELMo    .283    .406    .486   .316
+BERT    .193    .372    .107    .181
+Flair   .23 .102   .311    .303
+word2vec    .35 .634    .581    .427
+}\dataset
+\pgfplotstableread{
+x   direct para combined
+doc2vec .039    .388    .419
+Infersent   .221    .712    .712
+fastText    .446    .703    .703
+ELMo    .459    .546    .546
+BERT    .086    .583    .583
+Flair   .295    .492    .492
+word2vec    .581    .510    .677
+}\datasetp
+\begin{document}
+
+\begin{frame}
+\titlepage % Print the title page as the first slide
+\end{frame}
+
+%\begin{frame}
+%\frametitle{Overview} % Table of contents slide, comment this block out to remove it
+%\tableofcontents % Throughout your presentation, if you choose to use \section{} and \subsection{} commands, these will automatically be printed on this slide as an overview of your presentation
+%\end{frame}
+
+%----------------------------------------------------------------------------------------
+%	PRESENTATION SLIDES
+%----------------------------------------------------------------------------------------
+
+%------------------------------------------------
+%\section{Multiword Expressions (MWEs)} % Sections can be created in order to organize your presentation into discrete blocks, all sections and subsections are automatically printed in the table of contents as an overview of the talk
+%------------------------------------------------
+
+%\subsection{Talk about what they are, examples and types -- specifically NN and ADJ-NN} % A subsection can be created just before a set of slides with a common theme to further break down your presentation into chunks
+
+\begin{frame}
+\frametitle{Multiword Expressions (MWEs)}
+A multiword expression is a collection of two or more words that conveys a single meaning \\ \textit{e.g. ``snail mail'', ``in the long run''} \\~\\
+\textbf{Some types of MWEs}
+    \begin{itemize}
+        \item Noun compounds \textit{(student loan, game plan)}
+        \item Adjective-noun pairs \textit{(red carpet, smart card)}
+    \end{itemize}\\~\\
+\textbf{Issues}
+\begin{itemize}
+    \item Implicit semantics -- \textit{orange juice vs breakfast juice}
+    \item Ambiguous meaning/intent -- \textit{An actual ``clean slate'' or a new beginning (forgiving the past)?}
+\end{itemize}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}
+\frametitle{Compositionality of MWEs}
+The compositionality of an MWE is  the degree to which its meaning can be derived from that of its constituents.\\~\\
+\begin{itemize}
+    \item For e.g., \textit{``application form''} is compositional, \textit{``crocodile tears''} is not
+    \item Some MWEs might be semi-compositional, e.g. \textit{``poor \uline{man}''} and \textit{``game \uline{plan}''}
+\end{itemize} \\~\\
+The compositionality of MWEs has been shown to help with broader tasks like information retrieval, machine translation and evaluation (Venkatapathy \& Joshi, 2006; Acosta et al., 2011; Salehi et al., 2015)
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}
+\frametitle{Compositionality Prediction Techniques}
+\textbf{Distributional Hypothesis}
+\begin{itemize}
+    \item \textit{``You shall know a word by the company it keeps''} (Firth 1957:p.11)
+    \item The meaning of a word is predictable from its context
+\end{itemize} \\
+Distributional Similarity techniques operate under this hypothesis, assuming that an MWE must be compositional if it appears in similar contexts as its components.
+\\~\\
+\textbf{State-of-the-art:} The current best practice is to use \textbf{word2vec}, a word-level language embedding model, to measure the similarity between
+the embedding of the MWE and the weighted sum of that of its constituents (Salehi et al. 2015; Cordeiro et al. 2019). \\
+However, it requires token-level identification of the MWEs in the training corpus, which is not practical (knowledge of MWEs beforehand, retraining for new MWEs).
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}
+\frametitle{Research Questions}
+\begin{block}{Research Question #1}
+Can modern language embedding techniques better predict compositionality?
+\end{block} \\~\\
+\begin{block}{Research Question #2}
+Can paraphrase data enhance compositionality predictions?
+\end{block}
+\end{frame}
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Language Embeddings}
+Language Embeddings are multidimensional vector representations of text (a word, sentence or document), where each dimension represents a meaning and the text's association with it.
+\\~\\
+\textbf{Models used:}
+\begin{itemize}
+    \item \textbf{word2vec}: word-level embedding model, used for comparison
+    \item \textbf{fastText}: uses sub-word information in the form of n-grams, allowing it to generate embeddings for OOVs
+    \item \textbf{ELMo, BERT and Flair}: contextualised embeddings that capture word semantics in different contexts
+    \item \textbf{doc2vec and Infersent}: document-level embeddings
+\end{itemize}
+%\begin{figure}
+%\includegraphics[width=0.8\linewidth]{test}
+%\end{figure}
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Approach}
+\textbf{Datasets}: Normalised scores range from 0 - 100.
+\begin{itemize}
+    \item 3 English binary noun compound datasets: \textbf{Farahmand, Reddy and Ramisch}
+    \item 1 English adjective-noun pair datasets: \textbf{Disco\textsubscript{adj}}
+\end{itemize}
+\textbf{Ramisch} also contains paraphrases of the MWE, listed in decreasing order of popularity.\\~\\
+
+\textbf{Method}: Using \uline{pre-trained} models, we calculate the cosine similarity between the embedding of the MWE and
+\begin{itemize}
+    \item the weighted sum of that of its constituents \textit{(direct combination)}
+    \item that of one/the sum/the average of its paraphrases \textit{(paraphrase metric)}
+\end{itemize}
+We also combine the two metrics to yield a third.
+\end{frame}
+
+%------------------------------------------------
+\section{Compositionality of MWEs}
+%------------------------------------------------
+\begin{frame}
+\frametitle{Results - Overall Performance (Direct)}
+\begin{center}
+\pgfplotsset{width=12cm,height=6cm}
+\begin{tikzpicture}
+\begin{axis}[
+    bar width=2mm,
+    ybar,
+    %enlargelimits=0.15,
+    legend style={at={(0.5,-0.25)},
+      anchor=north,legend columns=-1},
+    ylabel={$Pearson's\quad r$},
+    symbolic x coords={doc2vec, Infersent, fastText,ELMo,BERT, Flair, word2vec},
+    xtick=data,
+    xticklabel style = {rotate=10},
+    ymajorgrids=true,
+    %nodes near coords,
+    %nodes near coords align={vertical},
+    ]
+\addplot[draw=blue!40,fill=blue!20] table[x=x,y=farahm] \dataset;
+\addplot[draw=red!40,fill=red!40] table[x=x,y=ramisch] \dataset;
+\addplot[draw=orange!40,fill=orange!40] table[x=x,y=reddy] \dataset;
+\addplot[draw=green!40,fill=green!40] table[x=x,y=discoj] \dataset;
+
+\legend{Farahmand, Ramisch, Reddy, Disco\textsubscript{adj}};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
+\begin{frame}
+\frametitle{Results - Use of Paraphrases (Ramisch)}
+\begin{center}
+\pgfplotsset{width=12cm,height=6cm}
+\begin{tikzpicture}
+\begin{axis}[
+    bar width=2mm,
+    ybar,
+    %enlargelimits=0.15,
+    legend style={at={(0.5,-0.25)},
+      anchor=north,legend columns=-1},
+    ylabel={$Pearson's\quad r$},
+    symbolic x coords={doc2vec, Infersent, fastText,ELMo,BERT, Flair, word2vec},
+    xtick=data,
+    xticklabel style = {rotate=10},
+    ymajorgrids=true,
+    %nodes near coords,
+    %nodes near coords align={vertical},
+    ]
+\addplot[draw=red!40,fill=red!40] table[x=x,y=direct] \datasetp;
+\addplot[draw=orange!40,fill=orange!40] table[x=x,y=para] \datasetp;
+\addplot[draw=blue!40,fill=blue!40] table[x=x,y=combined] \datasetp;
+
+\legend{Direct Combination, Paraphrases, Combined};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Observations}
+\begin{itemize}
+    \item None of the modern embedding models were able to outperform word2vec in the direct combination approach \\~\\
+    \item Infersent and fastText have the best results for the paraphrase metric \\~\\
+    \item The contextualised embeddings did not perform as well as expected; their raw usage without context provided similar results\\~\\
+    \item Overall, the methods struggle to model highly non-compositional MWEs, as well as the more dated MWEs (\textit{mobile phone, floppy disk})
+\end{itemize}
+\end{frame}
+
+%------------------------------------------------
+
+%\begin{frame}[fragile] % Need to use the fragile option when verbatim is used in the slide
+%\frametitle{Verbatim}
+%\begin{example}[Theorem Slide Code]
+%\begin{verbatim}
+%\begin{frame}
+%\frametitle{Theorem}
+%\begin{theorem}[Mass--energy equivalence]
+%$E = mc^2$
+%\end{theorem}
+%\end{frame}\end{verbatim}
+%\end{example}
+%\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}[fragile] % Need to use the fragile option when verbatim is used in the slide
+\frametitle{Conclusion}
+\begin{itemize}
+    \item Despite their impressive performance on a range of tasks, recent off-the-shelf embedding models are inferior to simple word2vec in predicting the compositionality of MWEs
+    \item Infersent, fastText and ELMo are, among the better performing models and do not require prior knowledge of MWEs
+    \item Paraphrases enhance the compositionality predictions of MWEs
+\end{itemize} \\~\\
+\textbf{Future work} \\
+\begin{itemize}
+    \item Compare the models' performances when trained on the same corpus and/or applied to other languages
+    \item Enhance compositionality predictions using semantic relationship data -- shared learning between the tasks
+\end{itemize}
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{References}
+\tiny
+%include in APA format
+\begin{columns}[T] % align columns
+\begin{column}{.48\textwidth}
+Venkatapathy, S., \& Joshi, A. K. (2006). Using information about multi-word expressions for the word-alignment task. In Proceedings of the Workshop on Multiword Expressions: Identifying and Exploiting Underlying Properties (pp 20--27).\\~\\
+Acosta O. C., Villavicencio, A., \& Moreira, V. P. (2011). Identification and treatment of multiword expressions applied to information retrieval. In Proceedings of the ALC Workshop on MWEs: from Parsing and Generation to the Real World (pp 101--109).\\~\\
+Salehi, B., Mathur, N., Cook, P., \& Baldwin, T. (2015). The impact of multiword expression compositionality on machine translation evaluation. In Proceedings of the 11th Workshop on Multiword Expressions (pp. 54-59).\\~\\
+Salehi, B., Cook, P., \& Baldwin, T. (2015). A Word Embedding Approach to Predicting the Compositionality of Multiword Expressions. HLT-NAACL. \\~\\
+Cordeiro, S., Villavicencio, A., Idiart, M., \& Ramisch, C. (2019). Unsupervised Compositionality Prediction of Nominal Compounds. Computational Linguistics (pp 1-57).
+\end{column}%
+\hfill%
+\begin{column}{.48\textwidth}
+Reddy, S., McCarthy, D., \& Manandhar, S. (2011). An empirical study on compositionality in compound nouns. In Proceedings of 5th International Joint Conference on Natural Language Processing (pp. 210-218).\\~\\
+Ramisch, C., Cordeiro, S., Zilio, L., Idiart, M., \& Villavicencio, A. (2016). How naked is the naked truth? a multilingual lexicon of nominal compound compositionality. In Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics (Volume 2: Short Papers) (Vol. 2, pp. 156-161).\\~\\
+Biemann, C., \& Giesbrecht, E. (2011, June). Distributional semantics and compositionality 2011: Shared task description and results. In Proceedings of the workshop on distributional semantics and compositionality (pp. 21-28). Association for Computational Linguistics.\\~\\
+Farahmand, M., Smith, A., \& Nivre, J. (2015). A multiword expression data set: Annotating non-compositionality and conventionalization for english noun compounds. In Proceedings of the 11th Workshop on Multiword Expressions (pp. 29-33).
+\end{column}%
+\end{columns}
+\end{frame}
+
+%----------------------------------------------------------------------------------------
+
+\end{document}
